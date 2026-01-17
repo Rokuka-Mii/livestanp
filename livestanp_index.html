@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YouTubeタイムスタンプ作成器</title>
+    <style>
+        body { font-family: sans-serif; display: flex; justify-content: center; padding: 20px; background: #f9f9f9; }
+        .container { background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        h1 { font-size: 1.2rem; color: #ff0000; text-align: center; }
+        .timer-display { font-size: 3rem; font-weight: bold; text-align: center; margin: 1rem 0; font-family: monospace; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+        button { padding: 12px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-start { background: #28a745; color: white; }
+        .btn-stamp { background: #007bff; color: white; grid-column: span 2; font-size: 1.1rem; }
+        .btn-reset { background: #6c757d; color: white; }
+        .result-area { width: 100%; height: 150px; margin-top: 15px; border: 1px solid #ddd; border-radius: 4px; padding: 10px; box-sizing: border-box; font-family: monospace; overflow-y: scroll; white-space: pre; }
+        .copy-btn { background: #333; color: white; width: 100%; margin-top: 10px; }
+        .hint { font-size: 0.8rem; color: #666; margin-top: 10px; text-align: center; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>YouTube Timestamp Helper</h1>
+    
+    <div class="timer-display" id="display">00:00</div>
+    
+    <div class="controls">
+        <button class="btn-start" id="startBtn" onclick="toggleTimer()">スタート</button>
+        <button class="btn-reset" onclick="resetTimer()">リセット</button>
+        <button class="btn-stamp" onclick="addStamp()">今の時間を記録 (タイムスタンプ)</button>
+    </div>
+
+    <div class="result-area" id="log">00:00 開始</div>
+    <button class="copy-btn" onclick="copyToClipboard()">リストを全コピー</button>
+    <p class="hint">記録後にテキストを直接編集して見出しを付けられます</p>
+</div>
+
+<script>
+    let startTime;
+    let elapsedTime = 0;
+    let timerInterval;
+    let isRunning = false;
+
+    function toggleTimer() {
+        if (!isRunning) {
+            startTime = Date.now() - elapsedTime;
+            timerInterval = setInterval(updateTime, 100);
+            document.getElementById('startBtn').innerText = "一時停止";
+            document.getElementById('startBtn').style.background = "#ffc107";
+            isRunning = true;
+        } else {
+            clearInterval(timerInterval);
+            document.getElementById('startBtn').innerText = "再開";
+            document.getElementById('startBtn').style.background = "#28a745";
+            isRunning = false;
+        }
+    }
+
+    function updateTime() {
+        elapsedTime = Date.now() - startTime;
+        document.getElementById('display').innerText = formatTime(elapsedTime);
+    }
+
+    function formatTime(ms) {
+        let totalSeconds = Math.floor(ms / 1000);
+        let hours = Math.floor(totalSeconds / 3600);
+        let minutes = Math.floor((totalSeconds % 3600) / 60);
+        let seconds = totalSeconds % 60;
+
+        if (hours > 0) {
+            return `${hours}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        } else {
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+    }
+
+    function addStamp() {
+        const log = document.getElementById('log');
+        const currentTime = formatTime(elapsedTime);
+        log.innerText += `\n${currentTime} `;
+        // 自動で末尾にスクロール
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function resetTimer() {
+        clearInterval(timerInterval);
+        elapsedTime = 0;
+        isRunning = false;
+        document.getElementById('display').innerText = "00:00";
+        document.getElementById('startBtn').innerText = "スタート";
+        document.getElementById('startBtn').style.background = "#28a745";
+        document.getElementById('log').innerText = "00:00 開始";
+    }
+
+    function copyToClipboard() {
+        const logText = document.getElementById('log').innerText;
+        navigator.clipboard.writeText(logText).then(() => {
+            alert("クリップボードにコピーしました！YouTubeの概要欄やコメントに貼り付けてください。");
+        });
+    }
+</script>
+
+</body>
+</html>
